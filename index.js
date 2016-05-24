@@ -38,6 +38,10 @@ function getPages(currentUrl, callback){
         }
       });
       callback(null, urls, urlsDone);
+    }else{
+      console.error('Get error for ' + currentUrl);
+      debug('Error details', error, response);
+      callback(null, [], urlsDone);
     }
   });
 };
@@ -60,7 +64,6 @@ async.whilst(function(){
   async.forEachOfLimit(_.pick(urls, function(key){ return !urls[key]; }), 8, function(hasBeenDone, urlToTreat, done){
     if(!hasBeenDone){
       debug('GET %s', urlToTreat);
-      async.nextTick(function(){
       getPages(urlToTreat, function(err, newUrls, urlsDone){
         if(!err){
           urlsDone.forEach(function(url){
@@ -79,18 +82,23 @@ async.whilst(function(){
             }
           });
         }
+        async.nextTick(function(){
+          done(err);
+        });
+      });
+    }else{
+      async.nextTick(function(){
         done();
       });
-      })
-    }else{
-      done();
     }
   }, function(err){
     debug('Finish found %d urls', _.keys(_.pick(urls, function(key){ return !urls[key]; })).length);
-    callback();
+    callback(err);
   });
-}, function(){
+}, function(err){
+  if(err){
+    console.error(err);
+  }
   debug('Operation done with total url %d', _.keys(urls).length);
   toCsv.end();
-  //JSON.stringify(urls);
 });
