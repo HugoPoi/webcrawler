@@ -20,14 +20,26 @@ if (typeof String.prototype.endsWiths !== 'function') {
 }
 
 
-function getPages(currentUrl, callback){
+function getPages(currentUrl, urlsDoneStatus, callback){
   var urlsDone = [];
-  urlsDone.push(currentUrl);
-  request({ followRedirect: function(response){
-    currentUrl = url.resolve(currentUrl, response.headers.location);
-    urlsDone.push(currentUrl);
-    return true;
-  }, url: currentUrl }, function (error, response, body) {
+  request({
+    headers: {
+      'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.5,en;q=0.3'
+    },
+    gzip: true,
+    followRedirect: function(response){
+      urlsDone.push({url: currentUrl, statusCode: response.statusCode });
+      var newUrl = url.resolve(currentUrl, response.headers.location);
+      if(urls[newUrl] && urls[newUrl].statusCode){
+        return false;
+      }else{
+        currentUrl = newUrl;
+        return true;
+      }
+    },
+    url: currentUrl
+  }, function (error, response, body) {
+    urlsDone.push({url: currentUrl, statusCode: response.statusCode });
     if (!error && response.statusCode === 200) {
       var $ = cheerio.load(body);
       var urls = [];
@@ -37,47 +49,57 @@ function getPages(currentUrl, callback){
           urls.push(url.resolve(currentUrl, href));
         }
       });
-      callback(null, urls, urlsDone);
+      return callback(null, urls, urlsDone);
+    }
+    if(!error && (response.statusCode === 302 || response.statusCode === 301)){
+      debug('Info return 3xx code on ', currentUrl);
     }else{
       console.error('Get error for ' + currentUrl);
-      debug('Error details', error, response);
-      callback(null, [], urlsDone);
+      debug('Error details', error, response.statusCode);
     }
+    return callback(null, [], urlsDone);
   });
 };
 
 var startUrlInfos = url.parse(process.argv[2]);
 
 var urls = {};
-urls[process.argv[2]] = false;
+urls[process.argv[2]] = {};
 
-
+debug('Seed', urls);
 var toCsv = stringify();
 toCsv.pipe(fs.createWriteStream(startUrlInfos.hostname + '_urls.csv'));
 
 async.whilst(function(){
-  return !!_.findKey(urls, function(done){
-    return !done;
+  return !!_.findKey(urls, function(urlData){
+    return !urlData.statusCode;
   });
-},function(callback){
+}, function(callback){
   debug('Start crawl batch');
-  async.forEachOfLimit(_.pick(urls, function(key){ return !urls[key]; }), 8, function(hasBeenDone, urlToTreat, done){
-    if(!hasBeenDone){
-      debug('GET %s', urlToTreat);
-      getPages(urlToTreat, function(err, newUrls, urlsDone){
+  async.forEachOfLimit(_.pick(urls, function(data, key){
+      return !urls[key].statusCode && !urls[key].beeingProcessed;
+    }),
+                       100,
+                       function(urlData, urlToTreat, done){
+    if(!urlData.statusCode && !urls[urlToTreat].beeingProcessed){
+      urls[urlToTreat].beeingProcessed = true;
+      getPages(urlToTreat, urls, function(err, newUrls, urlsDone){
         if(!err){
-          urlsDone.forEach(function(url){
-            urls[url] = true;
-            toCsv.write([url]);
+          urlsDone.forEach(function(update){
+            urls[update.url] = urls[update.url] || {};
+            urls[update.url].statusCode = update.statusCode;
+            if(update.statusCode === 200){
+              toCsv.write([update.url, update.statusCode]);
+            }
           });
           newUrls.forEach(function(newUrl){
             var newUrlInfos = url.parse(newUrl);
-            if(newUrlInfos.hostname === startUrlInfos.hostname && !newUrlInfos.pathname.endsWiths(['.jpg', '.png', '.pdf', '.mp4', '.mp3', '.zip', '.gif'])){
+            if(newUrlInfos.hostname === startUrlInfos.hostname && !newUrlInfos.pathname.endsWiths(['.jpg', '.png', '.pdf', '.mp4', '.mp3', '.zip', '.gif', '.rar'])){
               delete newUrlInfos.hash;
               //delete newUrlInfos.search;
               var addUrl = url.format(newUrlInfos);
               if(!urls[addUrl]){
-                urls[addUrl] = false;
+                urls[addUrl] = {};
               }
             }
           });
