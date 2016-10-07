@@ -10,4 +10,11 @@ You can display debug messages `DEBUG=* node . http://test.com`
 
 * Export all founded URLs to csv file.
 * Visit only content text/html content URL
+* Minimal request for 3xx urls
+
+## Todo list
+
+* Add options & documentation
+* Migrate to promise
+* Add library and bin
 
