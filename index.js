@@ -1,4 +1,4 @@
-var cheerio = require('cheerio'),
+const cheerio = require('cheerio'),
 request = require('request'),
 url = require('url'),
 _ = require('underscore'),
@@ -24,7 +24,8 @@ function getPages(currentUrl, urlsDoneStatus, callback){
   var urlsDone = [];
   request({
     headers: {
-      'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.5,en;q=0.3'
+      'Accept-Language': 'fr-FR,fr;q=0.8,en-US;q=0.5,en;q=0.3',
+      'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
     },
     gzip: true,
     followRedirect: function(response){
@@ -39,7 +40,11 @@ function getPages(currentUrl, urlsDoneStatus, callback){
     },
     url: currentUrl
   }, function (error, response, body) {
-    urlsDone.push({url: currentUrl, statusCode: response.statusCode });
+    if(error){
+      urlsDone.push({url: currentUrl, statusCode: error.message });
+    }else{
+      urlsDone.push({url: currentUrl, statusCode: response.statusCode });
+    }
     if (!error && response.statusCode === 200) {
       var $ = cheerio.load(body);
       var urls = [];
@@ -55,7 +60,7 @@ function getPages(currentUrl, urlsDoneStatus, callback){
       debug('Info return 3xx code on ', currentUrl);
     }else{
       console.error('Get error for ' + currentUrl);
-      debug('Error details', error, response.statusCode);
+      debug('Error details', error);
     }
     return callback(null, [], urlsDone);
   });
@@ -70,17 +75,33 @@ debug('Seed', urls);
 var toCsv = stringify();
 toCsv.pipe(fs.createWriteStream(startUrlInfos.hostname + '_urls.csv'));
 
+function getInfoCount(){
+  return _.chain(urls).values().countBy(function(urlData){
+    if(urlData.beeingProcessed && !urlData.statusCode){
+      return 'beeingProcessed';
+    }
+    if(urlData.statusCode){
+      return 'done';
+    }
+    if(!urlData.statusCode && !urlData.beeingProcessed){
+      return 'todo';
+    }
+    return 'dafuck';
+  }).value();
+}
+
 async.whilst(function(){
   return !!_.findKey(urls, function(urlData){
     return !urlData.statusCode;
   });
 }, function(callback){
   debug('Start crawl batch');
-  async.forEachOfLimit(_.pick(urls, function(data, key){
-      return !urls[key].statusCode && !urls[key].beeingProcessed;
-    }),
-                       100,
-                       function(urlData, urlToTreat, done){
+
+  var urlsToDo = _.pick(urls, function(data, key){
+    return !urls[key].statusCode && !urls[key].beeingProcessed;
+  });
+
+  async.forEachOfLimit(urlsToDo, 20, function(urlData, urlToTreat, done){
     if(!urlData.statusCode && !urls[urlToTreat].beeingProcessed){
       urls[urlToTreat].beeingProcessed = true;
       getPages(urlToTreat, urls, function(err, newUrls, urlsDone){
@@ -94,6 +115,7 @@ async.whilst(function(){
           });
           newUrls.forEach(function(newUrl){
             var newUrlInfos = url.parse(newUrl);
+            debug(newUrlInfos.hostname, startUrlInfos.hostname);
             if(newUrlInfos.hostname === startUrlInfos.hostname && !newUrlInfos.pathname.endsWiths(['.jpg', '.png', '.pdf', '.mp4', '.mp3', '.zip', '.gif', '.rar'])){
               delete newUrlInfos.hash;
               //delete newUrlInfos.search;
@@ -105,6 +127,7 @@ async.whilst(function(){
           });
         }
         async.nextTick(function(){
+          console.log('Crawling status ', getInfoCount());
           done(err);
         });
       });
