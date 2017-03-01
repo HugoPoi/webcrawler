@@ -1,4 +1,4 @@
-const Webcrawler = require('./lib/crawler');
+const Webcrawler = require('./lib');
 const Url = require('url');
 const argv = require('minimist')(process.argv.slice(2));
 const Csv = require('csv-stringify')();

@@ -1,10 +1,21 @@
 # Web Crawler
 Simple web crawling tool.
-## Usage
-1. `npm install`
-1. `node . http://test.com`
+## Usage in your project
+1. `npm install git+https://github.com/hugopoi/webcrawler.git`
 
-You can display debug messages `DEBUG=* node . http://test.com`
+```
+const Webcrawler = require('webcrawler/lib');
+const Url = require('url');
+let seedUrl = 'http://blog.hugopoi.net/';
+let parsedUrl = Url.parse(seedUrl);
+Webcrawler.crawl({ hostname: parsedUrl.hostname }, [ { url: seedUrl } ])
+  .then(urls => {
+    console.log(urls);
+  })
+
+```
+
+You can display debug messages `DEBUG="webcrawler" node .`
 
 ## Features
 
@@ -15,6 +26,4 @@ You can display debug messages `DEBUG=* node . http://test.com`
 ## Todo list
 
 * Add options & documentation
-* Migrate to promise
-* Add library and bin
 
