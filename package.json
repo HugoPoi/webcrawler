@@ -10,7 +10,8 @@
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
     "request": "^2.79.0",
-    "request-promise": "^4.1.1"
+    "request-promise": "^4.1.1",
+    "tldjs": "^1.7.0"
   },
   "devDependencies": {},
   "scripts": {

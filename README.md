@@ -17,13 +17,17 @@ Webcrawler.crawl({ hostname: parsedUrl.hostname }, [ { url: seedUrl } ])
 
 You can display debug messages `DEBUG="webcrawler" node .`
 
-## Features
+## Command Line Tool Features
 
 * Export all founded URLs to csv file.
 * Visit only content text/html content URL
-* Minimal request for 3xx urls
+
+Option Include all subdomains `--include-subdomain`
 
 ## Todo list
 
 * Add options & documentation
+* Update package.json for command line tool usage
+* Make package on npmjs.org
+* Add unit test
 
