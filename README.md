@@ -23,6 +23,7 @@ You can display debug messages `DEBUG="webcrawler" node .`
 * Visit only content text/html content URL
 
 Option Include all subdomains `--include-subdomain`
+Option Limit `--limit 10`
 
 ## Todo list
 
@@ -30,4 +31,4 @@ Option Include all subdomains `--include-subdomain`
 * Update package.json for command line tool usage
 * Make package on npmjs.org
 * Add unit test
-
+* Limit option on already checked urls
