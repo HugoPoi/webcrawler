@@ -1,4 +1,4 @@
-const Webcrawler = require('./lib');
+const Crawler = require('./lib');
 const Url = require('url');
 const argv = require('minimist')(process.argv.slice(2));
 const CsvStringify = require('csv-stringify')();
@@ -20,13 +20,13 @@ if(argv.seedFile){
 }
 
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
-let webCrawl = Webcrawler.crawl({ hostname: parsedUrl.hostname, includeSubdomain: argv['include-subdomain'], limit: argv['limit'], concurrency: argv['concurrency'] || 20 }, seedUrls);
+let webCrawl = new Crawler({ hostname: parsedUrl.hostname, includeSubdomain: argv['include-subdomain'], limit: argv['limit'], concurrency: argv['concurrency'] || 20 }, seedUrls);
 
-webCrawl.then(urls => {
+webCrawl.promise.then(urls => {
   console.log('Crawl %d urls.', urls.length);
   csvStream.end();
 });
 
-webCrawl.on('url.done', urlData => {
+webCrawl.emitter.on('url.done', urlData => {
   CsvStringify.write([ urlData.url, urlData.statusCode ]);
 });
