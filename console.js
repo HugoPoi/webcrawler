@@ -25,7 +25,8 @@ let webCrawl = new Crawler({
   includeSubdomain: argv['include-subdomain'],
   limit: argv['limit'],
   concurrency: argv['concurrency'] || 20,
-  priorityRegExp: argv.priorityRegExp
+  priorityRegExp: argv.priorityRegExp,
+  nofollow: argv.nofollow
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
@@ -34,5 +35,5 @@ webCrawl.promise.then(urls => {
 });
 
 webCrawl.emitter.on('url.done', urlData => {
-  CsvStringify.write([ urlData.url, urlData.statusCode ]);
+  CsvStringify.write([ urlData.url, urlData.statusCode, urlData.metas && urlData.metas.title, urlData.metas && urlData.metas.robots ]);
 });
