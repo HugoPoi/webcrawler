@@ -20,7 +20,13 @@ if(argv.seedFile){
 }
 
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
-let webCrawl = new Crawler({ hostname: parsedUrl.hostname, includeSubdomain: argv['include-subdomain'], limit: argv['limit'], concurrency: argv['concurrency'] || 20 }, seedUrls);
+let webCrawl = new Crawler({
+  hostname: parsedUrl.hostname,
+  includeSubdomain: argv['include-subdomain'],
+  limit: argv['limit'],
+  concurrency: argv['concurrency'] || 20,
+  priorityRegExp: argv.priorityRegExp
+}, seedUrls);
 
 webCrawl.promise.then(urls => {
   console.log('Crawl %d urls.', Object.keys(urls).length);

@@ -5,10 +5,12 @@
   "main": "console.js",
   "dependencies": {
     "cheerio": "^0.19.0",
+    "csv-parse": "^1.2.3",
     "csv-stringify": "^1.0.4",
     "debug": "^2.2.0",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
+    "p-queue": "^2.2.0",
     "request": "^2.79.0",
     "request-promise": "^4.1.1",
     "tldjs": "^1.7.0"
