@@ -29,11 +29,11 @@ let webCrawl = new Crawler({
   nofollow: argv.nofollow
 }, seedUrls);
 
-webCrawl.then(urls => {
-  console.log('Crawl %d urls.', urls.length);
+webCrawl.promise.then(urls => {
+  console.log('Crawl %d urls.', Object.keys(urls).length);
   csvStream.end();
 });
 
-webCrawl.on('url.done', urlData => {
+webCrawl.emitter.on('url.done', urlData => {
   CsvStringify.write([ urlData.url, urlData.statusCode, urlData.metas && urlData.metas.title, urlData.metas && urlData.metas.robots ]);
 });
