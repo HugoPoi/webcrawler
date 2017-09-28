@@ -23,7 +23,7 @@ var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_ur
 let webCrawl = new Crawler({ hostname: parsedUrl.hostname, includeSubdomain: argv['include-subdomain'], limit: argv['limit'], concurrency: argv['concurrency'] || 20 }, seedUrls);
 
 webCrawl.promise.then(urls => {
-  console.log('Crawl %d urls.', urls.length);
+  console.log('Crawl %d urls.', Object.keys(urls).length);
   csvStream.end();
 });
 
