@@ -30,7 +30,7 @@ let webCrawl = new Crawler({
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
-  console.log('Crawl %d urls.', Object.keys(urls).length);
+  console.log('Crawl %d urls.', urls.length);
   csvStream.end();
 });
 
