@@ -26,7 +26,8 @@ let webCrawl = new Crawler({
   limit: argv['limit'],
   concurrency: argv['concurrency'] || 20,
   priorityRegExp: argv.priorityRegExp,
-  nofollow: argv.nofollow
+  nofollow: argv.nofollow,
+  noindex: argv.noindex
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
