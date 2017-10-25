@@ -8,11 +8,24 @@ const Webcrawler = require('webcrawler/lib');
 const Url = require('url');
 let seedUrl = 'http://blog.hugopoi.net/';
 let parsedUrl = Url.parse(seedUrl);
-Webcrawler.crawl({ hostname: parsedUrl.hostname }, [ { url: seedUrl } ])
-  .then(urls => {
-    console.log(urls);
-  })
+let webCrawl = new Crawler({
+  hostname: parsedUrl.hostname, // Limit crawl to this domain name
+  includeSubdomain: false, // Crawl subdomain
+  limit: 10000, // Max urls to crawl
+  concurrency: 20, // Concurent http call
+  priorityRegExp: false, // String to prioritize during crawl, if in
+title, url or link text
+  nofollow: false, // Ignore urls on nofollow page
+  noindex: false // Ignore urls on noindex page
+}, [ { url: seedUrl } ]);
 
+webCrawl.promise.then(urls => {
+  console.log('Crawl %d urls.', urls.length);
+});
+
+webCrawl.emitter.on('url.done', urlData => {
+  console.log(urlData.url);
+});
 ```
 
 You can display debug messages `DEBUG="webcrawler" node .`
