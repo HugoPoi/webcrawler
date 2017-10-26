@@ -36,5 +36,5 @@ webCrawl.promise.then(urls => {
 });
 
 webCrawl.emitter.on('url.done', urlData => {
-  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), urlData.metas && urlData.metas.robots ]);
+  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]);
 });

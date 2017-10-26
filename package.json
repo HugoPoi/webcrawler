@@ -4,6 +4,7 @@
   "description": "Web crawling tool",
   "main": "console.js",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "csv-parse": "^1.2.3",
     "csv-stringify": "^1.0.4",
