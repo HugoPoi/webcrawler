@@ -2,6 +2,7 @@ const Crawler = require('./lib');
 const Url = require('url');
 const argv = require('minimist')(process.argv.slice(2));
 const CsvStringify = require('csv-stringify')();
+const PromisePipe = require('promisepipe');
 const CsvParse = require('csv-parse/lib/sync');
 const fs = require('fs');
 const _ = require('lodash');
@@ -28,12 +29,16 @@ let webCrawl = new Crawler({
   priorityRegExp: argv.priorityRegExp,
   nofollow: argv.nofollow,
   noindex: argv.noindex,
-  useCanonical: argv.useCanonical
+  useCanonical: argv.useCanonical,
+  exportTodoUrls: argv.exportTodoUrls
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
   console.log('Crawl %d urls.', urls.length);
-  csvStream.end();
+  if(argv.exportTodoUrls){
+    _.filter(urls, url => !url.statusCode).forEach(urlData => CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]));
+  }
+  return PromisePipe(csvStream);
 });
 
 webCrawl.emitter.on('url.done', urlData => {
