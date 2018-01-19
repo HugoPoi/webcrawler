@@ -25,6 +25,7 @@ let webCrawl = new Crawler({
   hostname: parsedUrl.hostname,
   includeSubdomain: argv['include-subdomain'],
   limit: argv['limit'],
+  timeout: argv['timeout'],
   concurrency: argv['concurrency'] || 20,
   priorityRegExp: argv.priorityRegExp,
   nofollow: argv.nofollow,
