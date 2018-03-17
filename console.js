@@ -6,6 +6,7 @@ const PromisePipe = require('promisepipe');
 const CsvParse = require('csv-parse/lib/sync');
 const fs = require('fs');
 const _ = require('lodash');
+const Gauge = require('gauge');
 
 let parsedUrl = Url.parse(argv._[0]);
 let seedUrls = [ { url: argv._[0] } ];
@@ -45,3 +46,11 @@ webCrawl.promise.then(urls => {
 webCrawl.emitter.on('url.done', urlData => {
   CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]);
 });
+
+
+if(argv.progress){
+  const gauge = new Gauge(process.stderr);
+  webCrawl.emitter.on('progress', counts => {
+    gauge.show('crawl ' + parsedUrl.hostname + ' ' + counts.done + '/' + (counts.todo + counts.done) + ' pq:' + counts.queue + ' lq:' + counts.lowPriorityQueue, counts.done / (counts.todo + counts.done));
+  });
+}

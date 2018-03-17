@@ -1,6 +1,6 @@
 {
   "name": "webcrawler",
-  "version": "3.2.3",
+  "version": "3.3.0",
   "description": "Web crawling tool",
   "main": "console.js",
   "dependencies": {
@@ -9,6 +9,7 @@
     "csv-parse": "^1.2.3",
     "csv-stringify": "^1.0.4",
     "debug": "^2.2.0",
+    "gauge": "^2.7.4",
     "lodash": "^4.17.4",
     "minimist": "^1.2.0",
     "p-queue": "^2.3.0",
