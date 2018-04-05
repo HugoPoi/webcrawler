@@ -31,6 +31,8 @@ if(argv.seedFile){ // This will rewrite done url in csv
   });
 }
 
+let startTime = new Date();
+
 let webCrawl = new Crawler({
   hostname: parsedUrl.hostname,
   includeSubdomain: argv['includeSubdomain'],
@@ -45,7 +47,7 @@ let webCrawl = new Crawler({
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
-  console.log('Crawl %d urls.', urls.length);
+  console.log('Crawl %d urls. average speed: %d, totalTime: %d', urls.length, urls.length / (new Date() - startTime) * 1000,  (new Date() - startTime) / 1000);
   if(argv.exportTodoUrls){
     _.filter(urls, url => !url.statusCode).forEach(urlData => writeUrlDataToCsv(urlData));
   }
@@ -58,9 +60,17 @@ webCrawl.emitter.on('url.done', urlData => {
 
 
 if(argv.progress){
+  let lastStats = 0, lastCall = new Date(), count = 0, speed = 0, remainingTime = Infinity;
   const gauge = new Gauge(process.stderr);
   webCrawl.emitter.on('progress', counts => {
-    gauge.show('crawl ' + parsedUrl.hostname + ' ' + counts.done + '/' + (counts.todo + counts.done) + ' pq:' + counts.queue + ' lq:' + counts.lowPriorityQueue, counts.done / (counts.todo + counts.done));
+    if(count++ > (counts.todo / ( argv.concurrency || 20) ) ){
+      speed = (counts.done - lastStats) / (new Date() - lastCall) * 1000;
+      remainingTime = counts.todo / speed;
+      count = 0;
+      lastStats = counts.done;
+      lastCall = new Date();
+    }
+    gauge.show('crawl ' + parsedUrl.hostname + ' ' + counts.done + '/' + (counts.todo + counts.done) + ' pq:' + counts.queue + ' lq:' + counts.lowPriorityQueue + ' s:' + speed + ' rt:' + remainingTime, counts.done / (counts.todo + counts.done));
   });
 }
 
