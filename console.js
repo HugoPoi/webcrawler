@@ -12,9 +12,9 @@ let parsedUrl = Url.parse(argv._[0]);
 let seedUrls = [ { url: argv._[0] } ];
 
 if(argv.seedFile){
-  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode'] })
+  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical'] })
   parsedSeedFile.forEach(function filter(urlData){
-    if(urlData.statusCode !== '200'){
+    if(!urlData.statusCode){
       delete urlData.statusCode;
     }
   });
@@ -24,7 +24,7 @@ if(argv.seedFile){
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 let webCrawl = new Crawler({
   hostname: parsedUrl.hostname,
-  includeSubdomain: argv['include-subdomain'],
+  includeSubdomain: argv['includeSubdomain'],
   limit: argv['limit'],
   timeout: argv['timeout'],
   concurrency: argv['concurrency'] || 20,
@@ -54,3 +54,5 @@ if(argv.progress){
     gauge.show('crawl ' + parsedUrl.hostname + ' ' + counts.done + '/' + (counts.todo + counts.done) + ' pq:' + counts.queue + ' lq:' + counts.lowPriorityQueue, counts.done / (counts.todo + counts.done));
   });
 }
+
+process.on('SIGINT', () => webCrawl.stop());
