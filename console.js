@@ -12,16 +12,25 @@ let parsedUrl = Url.parse(argv._[0]);
 let seedUrls = [ { url: argv._[0] } ];
 
 if(argv.seedFile){
+  // TODO implement a syntax checker on seed files
   let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical'] })
-  parsedSeedFile.forEach(function filter(urlData){
-    if(!urlData.statusCode){
-      delete urlData.statusCode;
-    }
-  });
   seedUrls = parsedSeedFile;
 }
 
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
+
+function writeUrlDataToCsv(urlData){
+  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]);
+}
+
+if(argv.seedFile){ // This will rewrite done url in csv
+  seedUrls.forEach(urlData => {
+    if(urlData.statusCode){
+      writeUrlDataToCsv(urlData);
+    }
+  });
+}
+
 let webCrawl = new Crawler({
   hostname: parsedUrl.hostname,
   includeSubdomain: argv['includeSubdomain'],
@@ -38,13 +47,13 @@ let webCrawl = new Crawler({
 webCrawl.promise.then(urls => {
   console.log('Crawl %d urls.', urls.length);
   if(argv.exportTodoUrls){
-    _.filter(urls, url => !url.statusCode).forEach(urlData => CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]));
+    _.filter(urls, url => !url.statusCode).forEach(urlData => writeUrlDataToCsv(urlData));
   }
   return PromisePipe(csvStream);
 });
 
 webCrawl.emitter.on('url.done', urlData => {
-  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]);
+  writeUrlDataToCsv(urlData);
 });
 
 
