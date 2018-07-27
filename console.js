@@ -43,7 +43,8 @@ let webCrawl = new Crawler({
   nofollow: argv.nofollow,
   noindex: argv.noindex,
   useCanonical: argv.useCanonical,
-  exportTodoUrls: argv.exportTodoUrls
+  exportTodoUrls: argv.exportTodoUrls,
+  headers: argv.headers
 }, seedUrls);
 
 webCrawl.promise.then(urls => {
