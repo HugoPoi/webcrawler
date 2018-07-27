@@ -13,14 +13,14 @@ let seedUrls = [ { url: argv._[0] } ];
 
 if(argv.seedFile){
   // TODO implement a syntax checker on seed files
-  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical'] })
+  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical', 'metas.lang'] })
   seedUrls = parsedSeedFile;
 }
 
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 
 function writeUrlDataToCsv(urlData){
-  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical') ]);
+  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical'), _.get(urlData, 'metas.lang')]);
 }
 
 if(argv.seedFile){ // This will rewrite done url in csv
