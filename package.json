@@ -1,6 +1,6 @@
 {
   "name": "webcrawler",
-  "version": "3.6.0",
+  "version": "3.6.1",
   "description": "Web crawling tool",
   "main": "console.js",
   "dependencies": {
@@ -15,8 +15,8 @@
     "moment": "^2.22.2",
     "p-queue": "^2.3.0",
     "promisepipe": "^2.1.1",
-    "request": "^2.79.0",
-    "request-promise": "^4.1.1",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
     "tldjs": "^1.7.0"
   },
   "devDependencies": {},
