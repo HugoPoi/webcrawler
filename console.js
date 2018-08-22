@@ -1,3 +1,4 @@
+'use strict';
 const Crawler = require('./lib');
 const Url = require('url');
 const argv = require('minimist')(process.argv.slice(2));

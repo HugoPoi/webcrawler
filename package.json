@@ -1,6 +1,6 @@
 {
   "name": "webcrawler",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "Web crawling tool",
   "main": "console.js",
   "dependencies": {
