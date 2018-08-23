@@ -79,7 +79,7 @@ if(argv.progress){
   });
 }
 
-webCrawl.promise.then(urls => {
+webCrawl.start().then(urls => {
   if(gauge){
     gauge.disable();
   }
