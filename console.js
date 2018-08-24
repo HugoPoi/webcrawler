@@ -49,6 +49,7 @@ let webCrawl = new Crawler({
   nofollow: argv.nofollow,
   noindex: argv.noindex,
   useCanonical: argv.useCanonical,
+  useSitemap: argv.useSitemap,
   exportTodoUrls: argv.exportTodoUrls,
   headers: argv.headers
 }, seedUrls);
@@ -56,13 +57,22 @@ let webCrawl = new Crawler({
 
 let gauge;
 if(argv.progress){
-  let lastStats = 0, lastCall = new Date(), count = 0, speed = 0, remainingTime = Infinity;
+  let lastStats = 0, lastCall = new Date(), count = 0, speed = 0, remainingTime;
+  if(argv.timeout){
+    remainingTime = argv.timeout / 1000;
+  }else{
+    remainingTime = Infinity;
+  }
   gauge = new Gauge(process.stderr);
-  let compiledProgressMessage = _.template('crawl <%= hostname %> <%= countDone %>/<%= countTotal %> pq:<%= countHighQueue %>  lq:<%= countLowQueue %> s:<%= speed %> rt:<%= remainingTime %>');
+  let compiledProgressMessage = _.template('crawl <%= hostname %> <%= countDone %>/<%= countTotal %> pq:<%= countHighQueue %>  lq:<%= countLowQueue %> s:<%= speed %> pen:<%= pending %> rt:<%= remainingTime %>');
   webCrawl.emitter.on('progress', counts => {
     if (count++ > (argv.concurrency || 20)) {
       speed = (counts.done - lastStats) / (new Date() - lastCall) * 1000;
-      remainingTime = counts.todo / speed;
+      if(argv.timeout){
+        remainingTime = moment.duration(moment(startTime).add(argv.timeout, 'milliseconds').diff()).as('seconds');
+      }else{
+        remainingTime = counts.todo / speed;
+      }
       count = 0;
       lastStats = counts.done;
       lastCall = new Date();
@@ -75,6 +85,7 @@ if(argv.progress){
       countLowQueue: counts.lowPriorityQueue,
       speed: speed.toFixed(2),
       remainingTime: moment.duration(remainingTime, 'seconds').humanize(),
+      pending: counts.pending,
     }), counts.done / (counts.todo + counts.done));
   });
 }
@@ -96,7 +107,6 @@ webCrawl.emitter.on('url.done', urlData => {
   writeUrlDataToCsv(urlData);
 });
 
-
-
-
-process.on('SIGINT', () => webCrawl.stop());
+if(argv.cleanStop){
+  process.on('SIGINT', () => webCrawl.stop());
+}
