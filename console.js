@@ -22,7 +22,14 @@ if(argv.seedFile){
 var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 
 function writeUrlDataToCsv(urlData){
-  CsvStringify.write([ urlData.url, urlData.statusCode, _.get(urlData,'metas.title', '').trim(), _.get(urlData, 'metas.robots'), _.get(urlData, 'metas.canonical'), _.get(urlData, 'metas.lang')]);
+  CsvStringify.write([
+    urlData.url,
+    urlData.statusCode,
+    _.get(urlData,'metas.title', '').trim(),
+    _.get(urlData, 'metas.robots'),
+    _.get(urlData, 'metas.canonical'),
+    _.get(urlData, 'metas.lang'),
+  ]);
 }
 
 if(argv.seedFile){ // This will rewrite done url in csv
