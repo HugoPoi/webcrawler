@@ -7,7 +7,7 @@
     "bluebird": "^3.5.1",
     "cheerio": "^1.0.0-rc.2",
     "csv-parse": "^1.2.3",
-    "csv-stringify": "^1.0.4",
+    "csv-stringify": "^5.4.0",
     "debug": "^2.2.0",
     "gauge": "^2.7.4",
     "lodash": "^4.17.4",

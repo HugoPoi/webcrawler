@@ -2,8 +2,9 @@
 const Crawler = require('./lib');
 const Url = require('url');
 const argv = require('minimist')(process.argv.slice(2));
-const CsvStringify = require('csv-stringify')();
+const CsvStringify = require('csv-stringify');
 const PromisePipe = require('promisepipe');
+// TODO use async for csv-parse
 const CsvParse = require('csv-parse/lib/sync');
 const fs = require('fs');
 const _ = require('lodash');
@@ -13,23 +14,23 @@ const Gauge = require('gauge');
 let parsedUrl = Url.parse(argv._[0]);
 let seedUrls = [ { url: argv._[0] } ];
 
+const csvConfig = {
+  header: true,
+  quoted_string: true,
+  columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical', 'metas.lang', 'parent.url']
+};
+
 if(argv.seedFile){
   // TODO implement a syntax checker on seed files
-  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), { columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical', 'metas.lang'] })
+  let parsedSeedFile = CsvParse(fs.readFileSync(argv.seedFile), csvConfig);
   seedUrls = parsedSeedFile;
 }
 
-var csvStream = CsvStringify.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
+const csvWriter = CsvStringify(csvConfig);
+const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 
 function writeUrlDataToCsv(urlData){
-  CsvStringify.write([
-    urlData.url,
-    urlData.statusCode,
-    _.get(urlData,'metas.title', '').trim(),
-    _.get(urlData, 'metas.robots'),
-    _.get(urlData, 'metas.canonical'),
-    _.get(urlData, 'metas.lang'),
-  ]);
+  csvWriter.write(urlData);
 }
 
 if(argv.seedFile){ // This will rewrite done url in csv
