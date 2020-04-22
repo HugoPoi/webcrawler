@@ -17,7 +17,7 @@ let seedUrls = [ { url: argv._[0] } ];
 const csvConfig = {
   header: true,
   quoted_string: true,
-  columns: ['url', 'statusCode', 'title', 'metas.robots', 'metas.canonical', 'metas.lang', 'parent.url']
+  columns: ['url', 'statusCode', 'metas.title', 'metas.robots', 'metas.canonical', 'metas.lang', 'parent.url']
 };
 
 if(argv.seedFile){
