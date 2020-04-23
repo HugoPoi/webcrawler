@@ -1,7 +1,7 @@
 'use strict';
 const Crawler = require('./lib');
 const Url = require('url');
-const argv = require('minimist')(process.argv.slice(2));
+const parseArgs = require('minimist');
 const CsvStringify = require('csv-stringify');
 const PromisePipe = require('promisepipe');
 // TODO use async for csv-parse
@@ -10,6 +10,13 @@ const fs = require('fs');
 const _ = require('lodash');
 const moment = require('moment');
 const Gauge = require('gauge');
+
+// TODO use sade for describing option https://www.npmjs.com/package/sade
+const argv = parseArgs(process.argv.slice(2), {
+  default: {
+    concurrency: 20
+  }
+});
 
 let parsedUrl = Url.parse(argv._[0]);
 let seedUrls = [ { url: argv._[0] } ];
@@ -29,10 +36,6 @@ if(argv.seedFile){
 const csvWriter = CsvStringify(csvConfig);
 const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 
-function writeUrlDataToCsv(urlData){
-  csvWriter.write(urlData);
-}
-
 if(argv.seedFile){ // This will rewrite done url in csv
   seedUrls.forEach(urlData => {
     if(urlData.statusCode){
@@ -49,10 +52,10 @@ let startTime = new Date();
 
 let webCrawl = new Crawler({
   hostname: parsedUrl.hostname,
-  includeSubdomain: argv['includeSubdomain'],
-  limit: argv['limit'],
-  timeout: argv['timeout'],
-  concurrency: argv['concurrency'] || 20,
+  includeSubdomain: argv.includeSubdomain,
+  limit: argv.limit,
+  timeout: argv.timeout,
+  concurrency: argv.concurrency,
   priorityRegExp: argv.priorityRegExp,
   nofollow: argv.nofollow,
   noindex: argv.noindex,
@@ -112,7 +115,7 @@ webCrawl.start().then(urls => {
 });
 
 webCrawl.emitter.on('url.done', urlData => {
-  writeUrlDataToCsv(urlData);
+  csvWriter.write(urlData);
 });
 
 if(argv.cleanStop){
