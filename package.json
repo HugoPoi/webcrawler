@@ -10,7 +10,7 @@
     "csv-stringify": "^5.4.0",
     "debug": "^2.2.0",
     "gauge": "^2.7.4",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "minimist": "^1.2.5",
     "moment": "^2.22.2",
     "p-queue": "^2.3.0",
