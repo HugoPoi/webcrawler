@@ -26,20 +26,21 @@ argsSadeParser
   .option('-p, --progress', 'Display progress during crawling', false)
   .example('https://blog.hugopoi.net --progress')
   .option('-c, --concurrency', 'specify the number of concurrent http queries running in parallel', 20)
+  .option('--priority-regexp', 'match urls will be push at the top of the crawling queue')
+  .option('--seed-file', 'take a csv as url seeds to crawl')
   .action((url, opts) => {
     const parsedUrl = Url.parse(url);
     const seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
 
-    if(opts.seedFile){
-      // TODO implement a syntax checker on seed files
-      let parsedSeedFile = CsvParse(fs.readFileSync(opts.seedFile), csvConfig);
-      seedUrls = parsedSeedFile;
-    }
-
     const csvWriter = CsvStringify(csvConfig);
     const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
 
-    if(opts.seedFile){ // This will rewrite done url in csv
+    // TODO should be either --seed-file or urls not both
+    if(opts['seed-file']){
+      // TODO implement a syntax checker on seed files
+      let parsedSeedFile = CsvParse(fs.readFileSync(opts['seed-file']), csvConfig);
+      seedUrls = parsedSeedFile;
+      // This will rewrite done url in csv
       seedUrls.forEach(urlData => {
         if(urlData.statusCode){
           writeUrlDataToCsv(urlData);
@@ -47,11 +48,7 @@ argsSadeParser
       });
     }
 
-    if(opts.priorityRegExp){
-      opts.priorityRegExp = eval(opts.priorityRegExp);
-    }
-
-    let startTime = new Date();
+    const startTime = new Date();
 
     let webCrawl = new Crawler({
       hostname: parsedUrl.hostname,
@@ -59,7 +56,8 @@ argsSadeParser
       limit: opts.limit,
       timeout: opts.timeout,
       concurrency: opts.concurrency,
-      priorityRegExp: opts.priorityRegExp,
+      // TODO security better protection on eval
+      priorityRegExp: opts['priority-regexp'] ? eval(opts['priority-regexp']) : undefined,
       nofollow: opts.nofollow,
       noindex: opts.noindex,
       useCanonical: opts.useCanonical,
