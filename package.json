@@ -11,7 +11,7 @@
     "debug": "^2.2.0",
     "gauge": "^2.7.4",
     "lodash": "^4.17.15",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "moment": "^2.22.2",
     "p-queue": "^2.3.0",
     "promisepipe": "^2.1.3",
