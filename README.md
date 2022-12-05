@@ -1,10 +1,16 @@
 # Web Crawler
-Simple web crawling tool.
-## Usage in your project
+Simple web crawling tool
+
+* Crawl a entire website with just a start url
+* Output the result as a CSV file
+* Can start and stop from the CSV file (need doc)
+* Fast
+
+## Usage in your project as a lib
 1. `npm install git+https://github.com/hugopoi/webcrawler.git`
 
-```
-const Webcrawler = require('webcrawler/lib');
+```javascript
+const Webcrawler = require('webcrawler');
 const Url = require('url');
 let seedUrl = 'http://blog.hugopoi.net/';
 let parsedUrl = Url.parse(seedUrl);

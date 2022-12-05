@@ -28,22 +28,29 @@ argsSadeParser
   .option('-c, --concurrency', 'specify the number of concurrent http queries running in parallel', 20)
   .option('--priority-regexp', 'match urls will be push at the top of the crawling queue')
   .option('--seed-file', 'take a csv as url seeds to crawl')
+  .option('--output-with-todo-urls', 'Keep the undone urls to continue the crawl later')
+  .option('--include-subdomain', 'continue and follow HTTP redirect to subdomains', false)
+  .option('--force-no-follow', 'Ignore nofollow html markup and continue crawling', false)
+  .option('--force-no-index', 'Ignore noindex html markup and continue crawling', false)
   .action((url, opts) => {
     const parsedUrl = Url.parse(url);
-    const seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
-
-    const csvWriter = CsvStringify(csvConfig);
-    const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
+    let seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
 
     // TODO should be either --seed-file or urls not both
     if(opts['seed-file']){
       // TODO implement a syntax checker on seed files
       let parsedSeedFile = CsvParse(fs.readFileSync(opts['seed-file']), csvConfig);
       seedUrls = parsedSeedFile;
-      // This will rewrite done url in csv
+    }
+
+    const csvWriter = CsvStringify(csvConfig);
+    const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
+
+    if(opts['seed-file']){
+    // This will rewrite done url in csv
       seedUrls.forEach(urlData => {
         if(urlData.statusCode){
-          writeUrlDataToCsv(urlData);
+          csvWriter.write(urlData);
         }
       });
     }
@@ -52,14 +59,14 @@ argsSadeParser
 
     let webCrawl = new Crawler({
       hostname: parsedUrl.hostname,
-      includeSubdomain: opts.includeSubdomain,
+      includeSubdomain: opts['include-subdomain'],
       limit: opts.limit,
       timeout: opts.timeout,
       concurrency: opts.concurrency,
       // TODO security better protection on eval
       priorityRegExp: opts['priority-regexp'] ? eval(opts['priority-regexp']) : undefined,
-      nofollow: opts.nofollow,
-      noindex: opts.noindex,
+      forceNoFollow: opts['force-no-follow'],
+      forceNoIndex: opts['force-no-index'],
       useCanonical: opts.useCanonical,
       useSitemap: opts.useSitemap,
       exportTodoUrls: opts.exportTodoUrls,
@@ -110,7 +117,7 @@ argsSadeParser
       let totalTime =  (new Date() - startTime) / 1000;
       console.log('crawled %d urls. average speed: %d urls/s, totalTime: %ds', urls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
       if(opts.exportTodoUrls){
-        _.filter(urls, url => !url.statusCode).forEach(urlData => writeUrlDataToCsv(urlData));
+        _.filter(urls, url => !url.statusCode).forEach(urlData => csvWriter.write(urlData));
       }
       return PromisePipe(csvStream);
     });
