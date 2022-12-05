@@ -13,6 +13,7 @@ const moment = require('moment');
 const Gauge = require('gauge');
 const sade = require('sade');
 const argsSadeParser = sade('webcrawler [urls]');
+const crypto = require('crypto');
 
 const csvConfig = {
   header: true,
@@ -28,10 +29,9 @@ argsSadeParser
   .option('-c, --concurrency', 'specify the number of concurrent http queries running in parallel', 20)
   .option('--priority-regexp', 'match urls will be push at the top of the crawling queue')
   .option('--seed-file', 'take a csv as url seeds to crawl')
-  .option('--output-with-todo-urls', 'Keep the undone urls to continue the crawl later')
   .option('--include-subdomain', 'continue and follow HTTP redirect to subdomains', false)
-  .option('--force-no-follow', 'Ignore nofollow html markup and continue crawling', false)
-  .option('--force-no-index', 'Ignore noindex html markup and continue crawling', false)
+  .option('--ignore-no-follow', 'Ignore nofollow html markup and continue crawling', false)
+  .option('--ignore-no-index', 'Ignore noindex html markup and continue crawling', false)
   .action((url, opts) => {
     const parsedUrl = Url.parse(url);
     let seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
@@ -65,8 +65,8 @@ argsSadeParser
       concurrency: opts.concurrency,
       // TODO security better protection on eval
       priorityRegExp: opts['priority-regexp'] ? eval(opts['priority-regexp']) : undefined,
-      forceNoFollow: opts['force-no-follow'],
-      forceNoIndex: opts['force-no-index'],
+      forceNoFollow: opts['ignore-no-follow'],
+      forceNoIndex: opts['ignore-no-index'],
       useCanonical: opts.useCanonical,
       useSitemap: opts.useSitemap,
       exportTodoUrls: opts.exportTodoUrls,
@@ -109,24 +109,26 @@ argsSadeParser
       });
     }
 
-    webCrawl.start().then(urls => {
+    webCrawl.start().then(({doneUrls, todoUrls}) => {
       if(gauge){
         gauge.disable();
       }
-      let averageSpeed = urls.length / (new Date() - startTime) * 1000;
+      let averageSpeed = doneUrls.length / (new Date() - startTime) * 1000;
       let totalTime =  (new Date() - startTime) / 1000;
-      console.log('crawled %d urls. average speed: %d urls/s, totalTime: %ds', urls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
-      if(opts.exportTodoUrls){
-        _.filter(urls, url => !url.statusCode).forEach(urlData => csvWriter.write(urlData));
-      }
+      console.log('crawled %d urls. average speed: %d urls/s, totalTime: %ds', doneUrls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
+      todoUrls.forEach(urlData => csvWriter.write(urlData));
       return PromisePipe(csvStream);
     });
 
-    webCrawl.emitter.on('url.done', urlData => {
+    webCrawl.emitter.on('url.done', (urlData, response) => {
       csvWriter.write(urlData);
+      if ( opts['save-files'] ) {
+        const hash = crypto.createHash('sha256').update(response.body).digest('hex');
+        fs.writeFileSync(hash + '.html', response.body)
+      }
     });
 
-    if(opts.cleanStop){
+    if(!opts['force-exit']){
       process.on('SIGINT', () => webCrawl.stop());
     }
   });
