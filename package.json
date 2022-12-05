@@ -1,6 +1,6 @@
 {
   "name": "webcrawler",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "Web crawling tool",
   "main": "./lib/index.js",
   "bin": "./console.js",
