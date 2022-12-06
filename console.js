@@ -29,9 +29,12 @@ argsSadeParser
   .option('-c, --concurrency', 'specify the number of concurrent http queries running in parallel', 20)
   .option('--priority-regexp', 'match urls will be push at the top of the crawling queue')
   .option('--seed-file', 'take a csv as url seeds to crawl')
+  .example('https://blog.hugopoi.net --seedfile blog.hugopoi.net_urls.csv')
   .option('--include-subdomain', 'continue and follow HTTP redirect to subdomains', false)
   .option('--ignore-no-follow', 'Ignore nofollow html markup and continue crawling', false)
   .option('--ignore-no-index', 'Ignore noindex html markup and continue crawling', false)
+  .option('--force-exit', 'Force exit when processus receive SIGINT via Ctrl+C', false)
+  .option('--save-files', 'Alpha feature: Save html files crawled named sha256 of the content itself')
   .action((url, opts) => {
     const parsedUrl = Url.parse(url);
     let seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
@@ -64,7 +67,7 @@ argsSadeParser
       timeout: opts.timeout,
       concurrency: opts.concurrency,
       // TODO security better protection on eval
-      priorityRegExp: opts['priority-regexp'] ? eval(opts['priority-regexp']) : undefined,
+      priorityRegExp: opts['priority-regexp'] ? new RegExp(opts['priority-regexp'], 'i') : undefined,
       forceNoFollow: opts['ignore-no-follow'],
       forceNoIndex: opts['ignore-no-index'],
       useCanonical: opts.useCanonical,
