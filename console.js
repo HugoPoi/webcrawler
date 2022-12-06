@@ -14,6 +14,7 @@ const Gauge = require('gauge');
 const sade = require('sade');
 const argsSadeParser = sade('webcrawler [urls]');
 const crypto = require('crypto');
+const JSONStream = require('jsonstream2');
 
 const csvConfig = {
   header: true,
@@ -35,6 +36,7 @@ argsSadeParser
   .option('--ignore-no-index', 'Ignore noindex html markup and continue crawling', false)
   .option('--force-exit', 'Force exit when processus receive SIGINT via Ctrl+C', false)
   .option('--save-files', 'Alpha feature: Save html files crawled named sha256 of the content itself')
+  .option('--output-format', 'Output format of the urls list: csv|json', 'csv')
   .action((url, opts) => {
     const parsedUrl = Url.parse(url);
     let seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
@@ -46,14 +48,15 @@ argsSadeParser
       seedUrls = parsedSeedFile;
     }
 
-    const csvWriter = CsvStringify(csvConfig);
-    const csvStream = csvWriter.pipe(fs.createWriteStream(parsedUrl.hostname + '_urls.csv'));
+    const outputWriter = opts['output-format'] === 'csv' ? CsvStringify(csvConfig) : JSONStream.stringify();
+    const outputFile = fs.createWriteStream(parsedUrl.hostname + `_urls.${opts['output-format']}`);
+    const outputStream = outputWriter.pipe(outputFile);
 
     if(opts['seed-file']){
     // This will rewrite done url in csv
       seedUrls.forEach(urlData => {
         if(urlData.statusCode){
-          csvWriter.write(urlData);
+          outputWriter.write(urlData);
         }
       });
     }
@@ -119,12 +122,13 @@ argsSadeParser
       let averageSpeed = doneUrls.length / (new Date() - startTime) * 1000;
       let totalTime =  (new Date() - startTime) / 1000;
       console.log('crawled %d urls. average speed: %d urls/s, totalTime: %ds', doneUrls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
-      todoUrls.forEach(urlData => csvWriter.write(urlData));
-      return PromisePipe(csvStream);
+      todoUrls.forEach(urlData => outputWriter.write(urlData));
+      outputWriter.end();
+      return PromisePipe(outputStream);
     });
 
     webCrawl.emitter.on('url.done', (urlData, response) => {
-      csvWriter.write(urlData);
+      outputWriter.write(urlData);
       if ( opts['save-files'] ) {
         const hash = crypto.createHash('sha256').update(response.body).digest('hex');
         fs.writeFileSync(hash + '.html', response.body)

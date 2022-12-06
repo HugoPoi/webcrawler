@@ -11,6 +11,7 @@
     "csv-stringify": "^5.4.0",
     "debug": "^2.2.0",
     "gauge": "^2.7.4",
+    "jsonstream2": "^3.0.0",
     "lodash": "^4.17.15",
     "minimist": "^1.2.5",
     "moment": "^2.22.2",
