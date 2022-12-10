@@ -30,7 +30,7 @@ argsSadeParser
   .option('-c, --concurrency', 'specify the number of concurrent http queries running in parallel', 20)
   .option('--priority-regexp', 'match urls will be push at the top of the crawling queue')
   .option('--seed-file', 'take a csv as url seeds to crawl')
-  .example('https://blog.hugopoi.net --seedfile blog.hugopoi.net_urls.csv')
+  .example('--seedfile blog.hugopoi.net_urls.csv --progress')
   .option('--include-subdomain', 'continue and follow HTTP redirect to subdomains', false)
   .option('--ignore-no-follow', 'Ignore nofollow html markup and continue crawling', false)
   .option('--ignore-no-index', 'Ignore noindex html markup and continue crawling', false)
@@ -38,15 +38,17 @@ argsSadeParser
   .option('--save-files', 'Alpha feature: Save html files crawled named sha256 of the content itself')
   .option('--output-format', 'Output format of the urls list: csv|json', 'csv')
   .action((url, opts) => {
-    const parsedUrl = Url.parse(url);
-    let seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
-
-    // TODO should be either --seed-file or urls not both
-    if(opts['seed-file']){
-      // TODO implement a syntax checker on seed files
-      let parsedSeedFile = CsvParse(fs.readFileSync(opts['seed-file']), csvConfig);
+    let seedUrls;
+    if (url) {
+      seedUrls = _.chain([url]).concat(opts._).map((url) => ({url})).value();
+    } else if(opts['seed-file']) {
+      // TODO implement a syntax checker on seed files and take care of json file too
+      const parsedSeedFile = CsvParse(fs.readFileSync(opts['seed-file']), csvConfig);
       seedUrls = parsedSeedFile;
+    } else {
+      throw new Error('Need a starting URL or a seedfile')
     }
+    const parsedUrl = Url.parse(seedUrls[0].url);
 
     const outputWriter = opts['output-format'] === 'csv' ? CsvStringify(csvConfig) : JSONStream.stringify();
     const outputFile = fs.createWriteStream(parsedUrl.hostname + `_urls.${opts['output-format']}`);
@@ -63,7 +65,7 @@ argsSadeParser
 
     const startTime = new Date();
 
-    let webCrawl = new Crawler({
+    const webCrawl = new Crawler({
       hostname: parsedUrl.hostname,
       includeSubdomain: opts['include-subdomain'],
       limit: opts.limit,
@@ -121,7 +123,7 @@ argsSadeParser
       }
       let averageSpeed = doneUrls.length / (new Date() - startTime) * 1000;
       let totalTime =  (new Date() - startTime) / 1000;
-      console.log('crawled %d urls. average speed: %d urls/s, totalTime: %ds', doneUrls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
+      console.error('crawled %d urls. average speed: %d urls/s, totalTime: %ds', doneUrls.length, averageSpeed.toFixed(2), totalTime.toFixed(0));
       todoUrls.forEach(urlData => outputWriter.write(urlData));
       outputWriter.end();
       return PromisePipe(outputStream);
