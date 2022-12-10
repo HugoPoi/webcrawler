@@ -19,7 +19,8 @@ const JSONStream = require('jsonstream2');
 const csvConfig = {
   header: true,
   quoted_string: true,
-  columns: ['url', 'statusCode', 'metas.title', 'metas.robots', 'metas.canonical', 'metas.lang', 'parent.url']
+  columns: ['url', 'statusCode', 'metas.title', 'metas.robots', 'metas.canonical', 'metas.lang', 'parent.url'],
+  from: 2, // Skip the column names
 };
 
 argsSadeParser
@@ -36,6 +37,7 @@ argsSadeParser
   .option('--ignore-no-index', 'Ignore noindex html markup and continue crawling', false)
   .option('--force-exit', 'Force exit when processus receive SIGINT via Ctrl+C', false)
   .option('--save-files', 'Alpha feature: Save html files crawled named sha256 of the content itself')
+  .option('--output', 'Path where to save scraped urls, can be - if you want to use stdout', '<%= hostname %>_urls.<%= format %>')
   .option('--output-format', 'Output format of the urls list: csv|json', 'csv')
   .action((url, opts) => {
     let seedUrls;
@@ -51,11 +53,12 @@ argsSadeParser
     const parsedUrl = Url.parse(seedUrls[0].url);
 
     const outputWriter = opts['output-format'] === 'csv' ? CsvStringify(csvConfig) : JSONStream.stringify();
-    const outputFile = fs.createWriteStream(parsedUrl.hostname + `_urls.${opts['output-format']}`);
+    const outputFileName = _.template(opts['output'])({hostname: parsedUrl.hostname, format: opts['output-format']});
+    const outputFile = (outputFileName) ? fs.createWriteStream(outputFileName) : process.stdout;
     const outputStream = outputWriter.pipe(outputFile);
 
     if(opts['seed-file']){
-    // This will rewrite done url in csv
+      // This will rewrite done url in csv
       seedUrls.forEach(urlData => {
         if(urlData.statusCode){
           outputWriter.write(urlData);
