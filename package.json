@@ -1,5 +1,5 @@
 {
-  "name": "webcrawler",
+  "name": "hugopoi-webcrawler",
   "version": "5.1.0",
   "description": "Web crawling tool",
   "main": "./lib/index.js",
